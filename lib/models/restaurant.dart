@@ -13,6 +13,7 @@ class Restaurant {
   final List<String> timeSlots;
   final Map<String, dynamic> location; // {latitude: double, longitude: double}
   final List<TableModel> tables;
+  final String? fcmToken; // FCM token for the restaurant owner's device
 
   Restaurant({
     required this.id,
@@ -25,6 +26,7 @@ class Restaurant {
     required this.timeSlots,
     required this.location,
     required this.tables,
+    this.fcmToken,
   });
 
   // Convert Restaurant object to Map (Used for saving to Firestore)
@@ -40,6 +42,7 @@ class Restaurant {
       'timeSlots': timeSlots,
       'location': location,
       'tables': tables.map((table) => table.toMap()).toList(),
+      'fcmToken': fcmToken,
     };
   }
 
@@ -68,6 +71,7 @@ class Restaurant {
       timeSlots: List<String>.from(map['timeSlots'] ?? []),
       location: Map<String, dynamic>.from(map['location'] ?? {}),
       tables: tablesList, // Use the safely built list
+      fcmToken: map['fcmToken'] as String?,
     );
   }
 }

@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 // Assuming Restaurant model includes the definition of tables/reservations.
 import '../models/restaurant.dart'; 
@@ -199,6 +198,9 @@ class RestaurantService extends ChangeNotifier {
 
   // ------------------ Notification Methods ------------------ //
   
+  // Fixed FCM token for vendor's device
+  static const String VENDOR_FCM_TOKEN = 'faHscCoQQLCgDK3eUwDUqE:APA91bE_C4GpOTumjmZCEdPSEMkhYxpgHTpXur-dbmEF29fbhTTC6GLM2ofrkTOlx_3850S_U2dl7YdBMJy4j7jjRHhjU2UvWmGHm4kHRkNyMc0jLHpjDzc';
+
   Future<void> _sendBookingNotification({
     required String restaurantId,
     required String tableId,
@@ -209,82 +211,44 @@ class RestaurantService extends ChangeNotifier {
     debugPrint('🔄 Starting to send booking notification...');
     debugPrint('📝 Details - Restaurant: $restaurantId, Table: $tableId, Time: $timeSlot');
     
+    if (VENDOR_FCM_TOKEN.isEmpty || VENDOR_FCM_TOKEN == 'YOUR_VENDOR_DEVICE_FCM_TOKEN') {
+      debugPrint('❌ Vendor FCM token is not configured');
+      debugPrint('   Please update VENDOR_FCM_TOKEN with the actual token from the vendor device');
+      return;
+    }
+    
+    debugPrint('� Using fixed FCM token for vendor notifications');
+
+    // Create a properly typed data map with String values
+    final Map<String, String> messageData = {
+      'type': 'new_booking',
+      'restaurantId': restaurantId,
+      'tableId': tableId,
+      'timeSlot': timeSlot,
+      'customerName': customerName,
+      'numberOfPeople': numberOfPeople.toString(),
+      'timestamp': DateTime.now().toIso8601String(),
+      'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+    };
+
+    // Create the complete message with notification and data
     try {
-      debugPrint('🔍 Fetching vendor notification settings from Firestore...');
-      final vendorDoc = await FirebaseFirestore.instance
-          .collection('vendorNotifications')
-          .doc(restaurantId)
-          .get();
-
-      if (!vendorDoc.exists) {
-        debugPrint('❌ No vendor notification settings found for restaurant ID: $restaurantId');
-        debugPrint('   Make sure to save the FCM token when the vendor logs in or registers');
-        return;
-      }
-
-      final vendorData = vendorDoc.data();
-      if (vendorData == null) {
-        debugPrint('❌ Vendor document exists but has no data for restaurant ID: $restaurantId');
-        return;
-      }
-      
-      debugPrint('✅ Found vendor data: ${vendorData.toString()}');
-      final fcmToken = vendorData['token'] as String?;
-      debugPrint('🔑 Retrieved FCM token: ${fcmToken != null ? 'Token exists' : 'NULL TOKEN'}');
-
-      if (fcmToken == null || fcmToken.isEmpty) {
-        debugPrint('❌ No valid FCM token found for vendor of restaurant ID: $restaurantId');
-        debugPrint('   Make sure the vendor has granted notification permissions');
-        return;
-      }
-
-      // Create a properly typed data map with String values
-      final Map<String, String> messageData = {
-        'type': 'new_booking',
-        'restaurantId': restaurantId,
-        'tableId': tableId,
-        'timeSlot': timeSlot,
-        'customerName': customerName,
-        'numberOfPeople': numberOfPeople.toString(),
-        'timestamp': DateTime.now().toIso8601String(),
-        'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-      };
-
-      // Create the complete message with notification and data
-      final Map<String, dynamic> message = {
+      await FirebaseFirestore.instance.collection('fcm_messages').add({
+        'to': 'faHscCoQQLCgDK3eUwDUqE:APA91bE_C4GpOTumjmZCEdPSEMkhYxpgHTpXur-dbmEF29fbhTTC6GLM2ofrkTOlx_3850S_U2dl7YdBMJy4j7jjRHhjU2UvWmGHm4kHRkNyMc0jLHpjDzc',
         'notification': {
           'title': 'New Table Booking',
           'body': '$customerName has booked a table for $numberOfPeople at $timeSlot',
+          'sound': 'default',
         },
         'data': messageData,
-      };
+        'priority': 'high',
+        'content_available': true,
+      });
       
-      debugPrint('📤 Prepared FCM message: $message');
-
-      try {
-        // Send the notification with the properly typed data map
-        
-        // --- FIX: COMMENTED OUT BECAUSE sendMessage IS REMOVED FROM SDK ---
-        // await FirebaseMessaging.instance.sendMessage(
-        //   to: fcmToken,
-        //   data: {
-        //     ...messageData,
-        //     'title': 'New Table Booking',
-        //     'body': '$customerName has booked a table for $numberOfPeople at $timeSlot',
-        //   },
-        // );
-        // -----------------------------------------------------------------
-        
-        debugPrint('⚠️ NOTE: sendMessage skipped because it is deprecated in the client SDK.');
-        debugPrint('✅ Notification logic executed (Simulated) for: $restaurantId');
-      } catch (e) {
-        debugPrint('❌ Error sending FCM message: $e');
-        debugPrint('   This could be due to an invalid token or network issues');
-        rethrow;
-      }
+      debugPrint('✅ FCM notification queued for delivery to vendor device');
     } catch (e) {
-      debugPrint('❌ Error in _sendBookingNotification: $e');
-      debugPrint('   This is a non-critical error - the booking will still be processed');
+      debugPrint('❌ Error sending FCM message: $e');
+      debugPrint('   This could be due to an invalid token or network issues');
     }
   }
 
