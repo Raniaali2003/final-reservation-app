@@ -1,6 +1,3 @@
-
-
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:my_first_flutter_app/services/auth_service.dart';
@@ -80,14 +77,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     }
 
     return _restaurants.where((restaurant) {
-      final name = restaurant.name.toLowerCase() ?? '';
-      final description = restaurant.description.toLowerCase() ?? '';
-      final category = restaurant.category.toLowerCase() ?? '';
+      final name = restaurant.name.toLowerCase();
+      final description = restaurant.description.toLowerCase();
+      final category = restaurant.category.toLowerCase();
       final query = _searchQuery.toLowerCase();
 
-      final matchesSearch = query.isEmpty ||
-          name.contains(query) ||
-          description.contains(query);
+      final matchesSearch =
+          query.isEmpty || name.contains(query) || description.contains(query);
 
       final matchesCategory = _selectedCategory == null ||
           category == _selectedCategory?.toLowerCase();
@@ -150,7 +146,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(primaryBlack)))
+          ? const Center(
+              child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(primaryBlack)))
           : Column(
               children: [
                 // Search Bar
@@ -159,7 +157,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   child: TextField(
                     controller: _searchController,
                     onChanged: _onSearchChanged,
-                    style: const TextStyle(color: primaryBlack), // Input text color
+                    style: const TextStyle(
+                        color: primaryBlack), // Input text color
                     decoration: InputDecoration(
                       hintText: 'Search restaurants...',
                       hintStyle: TextStyle(color: lightGray),
@@ -172,11 +171,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(color: lightGray, width: 1.0),
+                        borderSide:
+                            const BorderSide(color: lightGray, width: 1.0),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(color: primaryBlack, width: 2.0),
+                        borderSide:
+                            const BorderSide(color: primaryBlack, width: 2.0),
                       ),
                     ),
                   ),
@@ -198,14 +199,20 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                         selectedColor: primaryBlack,
                         backgroundColor: primaryWhite,
                         labelStyle: TextStyle(
-                            color: _selectedCategory == null ? primaryWhite : primaryBlack,
+                            color: _selectedCategory == null
+                                ? primaryWhite
+                                : primaryBlack,
                             fontWeight: FontWeight.bold),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
-                            side: BorderSide(color: _selectedCategory == null ? primaryBlack : lightGray)),
+                            side: BorderSide(
+                                color: _selectedCategory == null
+                                    ? primaryBlack
+                                    : lightGray)),
                       ),
                       ..._categories.map((category) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 4.0),
                             child: FilterChip(
                               label: Text(category),
                               selected: _selectedCategory == category,
@@ -214,11 +221,16 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                               selectedColor: primaryBlack,
                               backgroundColor: primaryWhite,
                               labelStyle: TextStyle(
-                                  color: _selectedCategory == category ? primaryWhite : primaryBlack,
+                                  color: _selectedCategory == category
+                                      ? primaryWhite
+                                      : primaryBlack,
                                   fontWeight: FontWeight.bold),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
-                                  side: BorderSide(color: _selectedCategory == category ? primaryBlack : lightGray)),
+                                  side: BorderSide(
+                                      color: _selectedCategory == category
+                                          ? primaryBlack
+                                          : lightGray)),
                             ),
                           )),
                     ],
@@ -232,12 +244,16 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       ? Center(
                           child: Text(
                             'No restaurants found',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(color: primaryBlack),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(color: primaryBlack),
                           ),
                         )
                       : GridView.builder(
                           padding: const EdgeInsets.all(8.0),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
                             childAspectRatio: 0.8,
                             crossAxisSpacing: 8.0,
@@ -254,39 +270,56 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => RestaurantDetailScreen(
+                                      builder: (context) =>
+                                          RestaurantDetailScreen(
                                         restaurantId: restaurant.id,
                                       ),
                                     ),
                                   );
                                 },
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
                                     // Image Display (Base64 Decode)
                                     Expanded(
                                       child: ClipRRect(
-                                        borderRadius: const BorderRadius.vertical(top: Radius.circular(8.0)),
-                                        child: restaurant.imagePath.isNotEmpty == true
-                                            ? Image.memory(
-                                                base64Decode(restaurant.imagePath),
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) => Container(
-                                                  color: Colors.grey[200],
-                                                  child: const Icon(Icons.broken_image, size: 50, color: lightGray),
-                                                ),
-                                              )
-                                            : Container(
-                                                color: Colors.grey[200],
-                                                child: const Icon(Icons.restaurant, size: 50, color: lightGray),
-                                              ),
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                                top: Radius.circular(8.0)),
+                                        child:
+                                            restaurant.imagePath.isNotEmpty ==
+                                                    true
+                                                ? Image.memory(
+                                                    base64Decode(
+                                                        restaurant.imagePath),
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (context,
+                                                            error,
+                                                            stackTrace) =>
+                                                        Container(
+                                                      color: Colors.grey[200],
+                                                      child: const Icon(
+                                                          Icons.broken_image,
+                                                          size: 50,
+                                                          color: lightGray),
+                                                    ),
+                                                  )
+                                                : Container(
+                                                    color: Colors.grey[200],
+                                                    child: const Icon(
+                                                        Icons.restaurant,
+                                                        size: 50,
+                                                        color: lightGray),
+                                                  ),
                                       ),
                                     ),
                                     // Text Info
                                     Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             restaurant.name.isNotEmpty == true
@@ -301,7 +334,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           Text(
-                                            restaurant.category.isNotEmpty == true
+                                            restaurant.category.isNotEmpty ==
+                                                    true
                                                 ? restaurant.category
                                                 : 'No Category',
                                             style: TextStyle(
@@ -326,5 +360,3 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 }
-
-

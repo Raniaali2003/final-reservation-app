@@ -1,12 +1,13 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:my_first_flutter_app/theme/app_theme_new.dart' as app_theme;
-import 'package:flutter_bloc/flutter_bloc.dart'; // <--- NEW
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+// Vendor Cubit
+import 'package:my_first_flutter_app/cubit/vendor_cubit/vendor_exports.dart';
 
 // CORE FIREBASE MESSAGING IMPORT
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -43,7 +44,7 @@ import 'firebase_options.dart';
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // MUST initialize Firebase in the background isolate
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  
+
   // NOTE: In a real app, you would log or save the data here to be loaded later.
   debugPrint("Handling a background message: ${message.data}");
 }
@@ -64,19 +65,19 @@ void main() async {
   // ----------------------------------------------------------------------
   // Register the background message handler before running the app
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  
+
   // Instantiate Notification Repository and initialize it
   final notificationRepo = NotificationRepository();
   await notificationRepo.init();
-  
+
   // Instantiate Notification Service (for token management)
   final notificationService = NotificationService();
   // ----------------------------------------------------------------------
-  
+
   // 3. CORE SERVICE INSTANTIATION
   final authService = AuthService();
   final restaurantService = RestaurantService();
-  
+
   // Handle global errors
   ErrorWidget.builder = (FlutterErrorDetails details) {
     if (details.exception is FlutterError) {
@@ -87,7 +88,8 @@ void main() async {
             children: [
               const Icon(Icons.error_outline, size: 48, color: Colors.red),
               const SizedBox(height: 16),
-              const Text("Something went wrong!", style: TextStyle(fontSize: 18)),
+              const Text("Something went wrong!",
+                  style: TextStyle(fontSize: 18)),
               const SizedBox(height: 8),
               Text(
                 details.exception.toString(),
@@ -101,23 +103,31 @@ void main() async {
     }
     return ErrorWidget(details.exception);
   };
-  
+
   // 4. Setup MultiProvider with the SINGLE instances
   final app = MultiProvider(
     providers: [
       // Standard Providers
       ChangeNotifierProvider<AuthService>.value(value: authService),
       ChangeNotifierProvider<RestaurantService>.value(value: restaurantService),
-      Provider<NotificationService>.value(value: notificationService), // <--- NEW
+      Provider<NotificationService>.value(
+          value: notificationService), // <--- NEW
 
       // BLoC Providers
-      BlocProvider<NotificationCubit>( // <--- NEW
+      BlocProvider<NotificationCubit>(
+        // <--- NEW
         lazy: false,
         create: (_) => NotificationCubit(notificationRepo),
       ),
+      BlocProvider<VendorCubit>(
+        // <--- NEW
+        lazy: false,
+        create: (_) => VendorCubit(),
+      ),
     ],
     // Pass the single instances to MyApp's constructor
-    child: MyApp(authService: authService, restaurantService: restaurantService),
+    child:
+        MyApp(authService: authService, restaurantService: restaurantService),
   );
 
   runApp(
@@ -132,7 +142,8 @@ class MyApp extends StatefulWidget {
   final AuthService authService;
   final RestaurantService restaurantService;
 
-  const MyApp({super.key, required this.authService, required this.restaurantService});
+  const MyApp(
+      {super.key, required this.authService, required this.restaurantService});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -143,18 +154,19 @@ class _MyAppState extends State<MyApp> {
     await LocalStorageService.init();
     await widget.authService.init();
     await widget.restaurantService.init();
-    
+
     // ----------------------------------------------------------------------
     // Save FCM token for the current user
     // This runs after the AuthService has initialized the current user.
     // ----------------------------------------------------------------------
     final authService = Provider.of<AuthService>(context, listen: false);
-    final notificationService = Provider.of<NotificationService>(context, listen: false);
+    final notificationService =
+        Provider.of<NotificationService>(context, listen: false);
 
     if (authService.currentUser != null) {
       // Save token for all users
       await notificationService.saveFcmToken(authService.currentUser!.id);
-      
+
       // If user is a vendor, also save as vendor token
       if (authService.currentUser!.isVendor) {
         // Assuming the vendor's restaurant ID is stored in the user object
@@ -204,7 +216,7 @@ class _MyAppState extends State<MyApp> {
 
         return MaterialApp(
           key: const ValueKey('main'),
-          navigatorKey: navigatorKey, 
+          navigatorKey: navigatorKey,
           useInheritedMediaQuery: true,
           builder: DevicePreview.appBuilder,
           locale: DevicePreview.locale(context),
@@ -223,31 +235,40 @@ class _MyAppState extends State<MyApp> {
           routes: {
             '/role-selection': (context) => const RoleSelectionScreen(),
             '/login': (context) {
-              final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+              final args = ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
               return LoginScreen(isVendor: args?['isVendor'] ?? false);
             },
             '/register': (context) {
-              final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+              final args = ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
               return RegisterScreen(isVendor: args?['isVendor'] ?? false);
             },
             '/vendor-home': (context) => const VendorHomeScreen(),
             '/vendor/add-restaurant': (context) => const AddRestaurantScreen(),
-            '/vendor/notifications': (context) => const NotificationsScreen(), // <--- NEW NOTIFICATION HISTORY ROUTE
-            
+            '/vendor/notifications': (context) =>
+                const NotificationsScreen(), // <--- NEW NOTIFICATION HISTORY ROUTE
+
             // Route for notification tap navigation
-            '/vendor/booked_tables_notification': (context) { 
-              final restaurantId = ModalRoute.of(context)!.settings.arguments as String?;
+            '/vendor/booked_tables_notification': (context) {
+              final restaurantId =
+                  ModalRoute.of(context)!.settings.arguments as String?;
               if (restaurantId == null) {
-                return const Scaffold(body: Center(child: Text('Restaurant ID is missing from notification')));
+                return const Scaffold(
+                    body: Center(
+                        child: Text(
+                            'Restaurant ID is missing from notification')));
               }
               return BookedTablesScreen(restaurantId: restaurantId);
             },
-            
+
             // The existing '/vendor/booked-tables' route
             '/vendor/booked-tables': (context) {
-              final restaurantId = ModalRoute.of(context)!.settings.arguments as String?;
+              final restaurantId =
+                  ModalRoute.of(context)!.settings.arguments as String?;
               if (restaurantId == null) {
-                return const Scaffold(body: Center(child: Text('Restaurant ID is required')));
+                return const Scaffold(
+                    body: Center(child: Text('Restaurant ID is required')));
               }
               return BookedTablesScreen(restaurantId: restaurantId);
             },
@@ -255,8 +276,10 @@ class _MyAppState extends State<MyApp> {
           },
           onGenerateRoute: (settings) {
             // This section might need cleanup, but keeping the original logic structure
-            if (settings.name == '/restaurant-detail' || settings.name == '/booking') {
-              return MaterialPageRoute(builder: (context) => const VendorHomeScreen());
+            if (settings.name == '/restaurant-detail' ||
+                settings.name == '/booking') {
+              return MaterialPageRoute(
+                  builder: (context) => const VendorHomeScreen());
             }
             return null;
           },
