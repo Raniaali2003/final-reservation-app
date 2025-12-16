@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter/services.dart'; // Needed for SystemChrome
+import 'package:flutter/services.dart'; 
 
 
 
@@ -8,7 +8,6 @@ import 'package:flutter/services.dart'; // Needed for SystemChrome
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
 
-  // Color constants for B&W theme (matching RegisterScreen)
   static const Color primaryBlack = Colors.black;
   static const Color lightGray = Colors.grey;
   static const Color light = Colors.white;
@@ -17,21 +16,17 @@ class RoleSelectionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Set System UI style to make status bar transparent and icons visible
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent, 
-      statusBarIconBrightness: Brightness.light, // For Android (dark status bar)
-      statusBarBrightness: Brightness.dark,      // For iOS (dark status bar)
+      statusBarIconBrightness: Brightness.light, 
+      statusBarBrightness: Brightness.dark,     
     ));
 
     return Scaffold(
-      // 2. CRUCIAL FIX: Extend the body to draw behind the status bar
       extendBodyBehindAppBar: true, 
       backgroundColor: primaryBlack,
-      // Use Stack to place background image behind content
       body: Stack(
         children: [
-          // 3. Background Image (will now fill the entire physical screen)
           Positioned.fill(
             child: Image.asset(
               'assets/background.jpg',
@@ -39,8 +34,7 @@ class RoleSelectionScreen extends StatelessWidget {
             ),
           ),
 
-          // 4. Content with ScrollView wrapped in SafeArea
-          // SafeArea ensures content starts below the status bar/notch.
+         
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 60.0),
@@ -76,7 +70,6 @@ class RoleSelectionScreen extends StatelessWidget {
                     icon: Icons.person,
                     title: 'Customer',
                     description: 'Browse restaurants and make reservations',
-                    // Navigation: Customer -> RegisterScreen (will redirect to vendor home)
                     onTap: () => _navigateToAuth(context, isVendor: false),
                   ),
                   const SizedBox(height: 20),
@@ -85,7 +78,6 @@ class RoleSelectionScreen extends StatelessWidget {
                     icon: Icons.restaurant,
                     title: 'Restaurant Owner',
                     description: 'Manage your restaurant and view reservations',
-                    // ARGUMENT ADDED: Explicitly pass isVendor: true to match _navigateToAuth logic
                     onTap: () => _navigateToAuth(context, isVendor: true),
                   ),
                   const SizedBox(height: 80), 
@@ -98,7 +90,6 @@ class RoleSelectionScreen extends StatelessWidget {
     );
   }
 
-  // Helper Widget for Logo
   Widget _buildLogoPlaceholder() {
     return Center(
       child: Image.asset(
@@ -108,7 +99,6 @@ class RoleSelectionScreen extends StatelessWidget {
     );
   }
 
-  // Helper Widget for Role Cards
   Widget _buildRoleCard(
     BuildContext context, {
     required IconData icon,
@@ -172,13 +162,10 @@ class RoleSelectionScreen extends StatelessWidget {
     );
   }
 
-    // Both customer and vendor will eventually go to vendor home
     void _navigateToAuth(BuildContext context, {required bool isVendor}) {
   if (isVendor) {
-    // Navigate directly to vendor home without authentication
     Navigator.pushReplacementNamed(context, '/vendor-home');
   } else {
-    // For customers, direct to login page
     Navigator.pushNamed(
       context,
       '/login',

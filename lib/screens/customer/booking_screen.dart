@@ -120,7 +120,6 @@ class _BookingScreenState extends State<BookingScreen> {
           ),
         );
         
-        // Navigate to booking confirmation or home screen
         Navigator.pushReplacementNamed(context, '/customer');
       }
     } catch (e) {
@@ -173,7 +172,6 @@ class _BookingScreenState extends State<BookingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Booking Summary Card
                 Card(
                   elevation: 2,
                   shape: RoundedRectangleBorder(
@@ -251,7 +249,6 @@ class _BookingScreenState extends State<BookingScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your phone number';
                     }
-                    // Basic phone number validation
                     if (!RegExp(r'^[0-9+\-\s()]{8,}$').hasMatch(value)) {
                       return 'Please enter a valid phone number';
                     }
@@ -260,7 +257,6 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Special Requests
                 Text(
                   'Special Requests (Optional)',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -280,7 +276,6 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Terms and Conditions
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -301,7 +296,6 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Confirm Button
                 SizedBox(
                   width: double.infinity,
                   height: 50,

@@ -20,7 +20,6 @@ class RestaurantService extends ChangeNotifier {
   final CollectionReference _usersRef =
       FirebaseFirestore.instance.collection('users');
 
-  // NEW: Dedicated Reservations Collection for easy Cloud Function listening
   final CollectionReference _reservationsRef =
       FirebaseFirestore.instance.collection('reservations');
 
@@ -42,7 +41,6 @@ class RestaurantService extends ChangeNotifier {
     '12:00',
   ];
 
-  // ------------------ Initialization ------------------ //
   Future<void> init() async {
     if (!_isInitialized) {
       await loadUsers();
@@ -89,13 +87,9 @@ class RestaurantService extends ChangeNotifier {
         await _usersRef.doc(admin.id).set(admin.toJson());
       }
       notifyListeners();
-      debugPrint('Loaded ${_users.length} users from Firestore');
-    } catch (e) {
-      debugPrint('Error loading users: $e');
-    }
+    } catch (e) {}
   }
 
-  // ------------------ Restaurant CRUD ------------------ //
   Future<Restaurant> addRestaurant({
     required String name,
     required String description,
@@ -107,10 +101,8 @@ class RestaurantService extends ChangeNotifier {
   }) async {
     final restaurantTimeSlots = timeSlots ?? List.from(defaultTimeSlots);
 
-    // Hardcoded seats per table, matching the constructor logic
     const int seatsPerTable = 6;
 
-    // 1. Generate TableModels (FIXED)
     final List<TableModel> initialTables = List.generate(tableCount, (index) {
       return TableModel(
         id: _uuid.v4(),
@@ -120,7 +112,6 @@ class RestaurantService extends ChangeNotifier {
       );
     });
 
-    // Use a placeholder if imagePath is null
     const String defaultPlaceholder = 'assets/restaurant_placeholder.png';
 
     final newRestaurant = Restaurant(
@@ -133,7 +124,7 @@ class RestaurantService extends ChangeNotifier {
       seatsPerTable: seatsPerTable,
       timeSlots: restaurantTimeSlots,
       location: location,
-      tables: initialTables, // Now correctly initialized
+      tables: initialTables,
     );
 
     _restaurants.add(newRestaurant);
@@ -153,21 +144,13 @@ class RestaurantService extends ChangeNotifier {
     }
   }
 
-  // DELETE IMPLEMENTATION: Robust with error handling
   Future<void> deleteRestaurant(String restaurantId) async {
-    // 1. Remove from local list (Optimistic Update)
     _restaurants.removeWhere((r) => r.id == restaurantId);
     notifyListeners();
 
     try {
-      // 2. Delete from Firestore
       await _restaurantsRef.doc(restaurantId).delete();
-
-      // NOTE: If reservations or other child data are stored in sub-collections,
-      // they must be deleted here or via a Firebase Function to avoid orphaned data.
     } catch (e) {
-      // 3. Error Handling: Revert the local change and inform the user.
-      debugPrint('Error deleting restaurant $restaurantId: $e');
       await loadRestaurants();
       throw Exception('Failed to delete restaurant due to a database error.');
     }
@@ -191,9 +174,6 @@ class RestaurantService extends ChangeNotifier {
     }
   }
 
-  // ------------------ Notification Methods ------------------ //
-
-  // Fixed FCM token for vendor's device
   static const String VENDOR_FCM_TOKEN =
       'faHscCoQQLCgDK3eUwDUqE:APA91bE_C4GpOTumjmZCEdPSEMkhYxpgHTpXur-dbmEF29fbhTTC6GLM2ofrkTOlx_3850S_U2dl7YdBMJy4j7jjRHhjU2UvWmGHm4kHRkNyMc0jLHpjDzc';
 
@@ -204,21 +184,11 @@ class RestaurantService extends ChangeNotifier {
     required String customerName,
     required int numberOfPeople,
   }) async {
-    debugPrint('🔄 Starting to send booking notification...');
-    debugPrint(
-        '📝 Details - Restaurant: $restaurantId, Table: $tableId, Time: $timeSlot');
-
     if (VENDOR_FCM_TOKEN.isEmpty ||
         VENDOR_FCM_TOKEN == 'YOUR_VENDOR_DEVICE_FCM_TOKEN') {
-      debugPrint('❌ Vendor FCM token is not configured');
-      debugPrint(
-          '   Please update VENDOR_FCM_TOKEN with the actual token from the vendor device');
       return;
     }
 
-    debugPrint('� Using fixed FCM token for vendor notifications');
-
-    // Create a properly typed data map with String values
     final Map<String, String> messageData = {
       'type': 'new_booking',
       'restaurantId': restaurantId,
@@ -230,7 +200,6 @@ class RestaurantService extends ChangeNotifier {
       'click_action': 'FLUTTER_NOTIFICATION_CLICK',
     };
 
-    // Create the complete message with notification and data
     try {
       await FirebaseFirestore.instance.collection('fcm_messages').add({
         'to':
@@ -245,15 +214,8 @@ class RestaurantService extends ChangeNotifier {
         'priority': 'high',
         'content_available': true,
       });
-
-      debugPrint('✅ FCM notification queued for delivery to vendor device');
-    } catch (e) {
-      debugPrint('❌ Error sending FCM message: $e');
-      debugPrint('   This could be due to an invalid token or network issues');
-    }
+    } catch (e) {}
   }
-
-  // ------------------ Table & Reservation ------------------ //
 
   List<dynamic> getAvailableTables({
     required String restaurantId,
@@ -264,7 +226,6 @@ class RestaurantService extends ChangeNotifier {
     final restaurant = getRestaurantById(restaurantId);
     if (restaurant == null) return [];
 
-    // Returns a list of available tables matching the criteria
     return restaurant.tables
         .where((table) =>
             table.maxSeats >= numberOfPeople &&
@@ -272,22 +233,18 @@ class RestaurantService extends ChangeNotifier {
         .toList();
   }
 
-  // Helper function to find user or return null
   user_model.User? getUserById(String userId) {
     try {
       return _users.firstWhere((u) => u.id == userId);
     } catch (_) {
-      debugPrint('User with ID $userId not found in loaded _users list.');
       return null;
     }
   }
 
-  // CRITICAL FIX: Changed 'userId' to require 'user' object directly for reliability.
   Future<void> makeReservation({
     required String restaurantId,
     required String tableId,
-    required user_model.User
-        customer, // 🌟 FIX: Require the User object directly
+    required user_model.User customer,
     required DateTime date,
     required String timeSlot,
     required int numberOfPeople,
@@ -296,23 +253,19 @@ class RestaurantService extends ChangeNotifier {
     final restaurant = getRestaurantById(restaurantId);
     if (restaurant == null) throw Exception('Restaurant not found');
 
-    // Check if customer ID is valid (more permissive check)
     if (customer.id.isEmpty) {
       throw Exception('Invalid user information. Please log in again.');
     }
 
-    // 1. Locate the table index
     final tableIndex = restaurant.tables.indexWhere((t) => t.id == tableId);
     if (tableIndex == -1) throw Exception('Table not found');
 
-    // 2. Generate required data (ID and timestamp)
     final reservationId = _uuid.v4();
     final now = DateTime.now();
 
-    // 3. Create the new Reservation object
     final newReservation = Reservation(
       id: reservationId,
-      userId: customer.id, // Use ID from the reliable customer object
+      userId: customer.id,
       tableId: tableId,
       date: date,
       timeSlot: timeSlot,
@@ -322,27 +275,19 @@ class RestaurantService extends ChangeNotifier {
       isCancelled: false,
     );
 
-    // 4. Update the local Restaurant model (For Availability Check)
     final tableToUpdate = restaurant.tables[tableIndex];
 
-    // Check availability one last time (Good practice before local modification)
     if (!tableToUpdate.isAvailable(date, timeSlot)) {
       throw Exception('The selected table is no longer available.');
     }
 
     tableToUpdate.reservations.add(newReservation);
 
-    // 5. Persist the change (Two steps are required now)
     try {
-      // A) UPDATE RESTAURANT: Update the ENTIRE Restaurant document
       await _restaurantsRef.doc(restaurantId).set(restaurant.toMap());
-
-      // B) CREATE RESERVATION DOCUMENT: Write the reservation to a separate collection
       await _reservationsRef.doc(reservationId).set(newReservation.toMap());
-
       notifyListeners();
 
-      // Attempt to send notification (Logic inside is now disabled/safe)
       await _sendBookingNotification(
         restaurantId: restaurantId,
         tableId: tableId,
@@ -351,40 +296,28 @@ class RestaurantService extends ChangeNotifier {
         numberOfPeople: numberOfPeople,
       );
     } catch (e) {
-      // 6. Rollback local change if save fails
       tableToUpdate.reservations.remove(newReservation);
       notifyListeners();
-      debugPrint('Error saving reservation: $e');
-      // Re-throw the exception to notify the UI
       throw Exception('Failed to book table: Database save error. $e');
     }
   }
 
-  // ----------------------------------------------------
-  // NEW METHOD: Get all reservations for the current user
-  // ----------------------------------------------------
   List<Reservation> getUserReservations(String userId) {
     final List<Reservation> userBookings = [];
 
-    // Iterate over all restaurants
     for (final restaurant in _restaurants) {
-      // Iterate over all tables in the restaurant
       for (final table in restaurant.tables) {
-        // Filter the table's reservations for the current user's ID
         final reservationsForUser = table.reservations.where(
           (reservation) =>
               reservation.userId == userId && !reservation.isCancelled,
         );
 
-        // Add the found reservations to the main list
         userBookings.addAll(reservationsForUser);
       }
     }
 
-    // Sort the reservations, typically by date and time (e.g., upcoming first)
     try {
       userBookings.sort((a, b) {
-        // Combine date and timeSlot into a single DateTime for reliable sorting
         final timePartsA = a.timeSlot.split(':');
         final combinedA = DateTime(a.date.year, a.date.month, a.date.day,
             int.parse(timePartsA[0]), int.parse(timePartsA[1]));
@@ -395,15 +328,11 @@ class RestaurantService extends ChangeNotifier {
 
         return combinedA.compareTo(combinedB);
       });
-    } catch (e) {
-      debugPrint('Error sorting reservations: $e');
-      // Fallback to unsorted list if parsing fails
-    }
+    } catch (e) {}
 
     return userBookings;
   }
 
-  // ------------------ User Auth ------------------ //
   Future<bool> login(String email, String password) async {
     final user = _users.firstWhere(
       (u) => u.email.toLowerCase() == email.toLowerCase(),
@@ -472,10 +401,6 @@ class RestaurantService extends ChangeNotifier {
     return success;
   }
 }
-
-// ----------------------------------------------------
-// Restaurant Extension (Assuming this lives in restaurant.dart or similar)
-// ----------------------------------------------------
 
 extension RestaurantExtension on Restaurant {
   Restaurant copyWith({

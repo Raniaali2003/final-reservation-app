@@ -23,24 +23,23 @@ class TableWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
-    // Determine colors based on availability and selection
-    Color tableColor = isSelected 
-        ? colorScheme.primary 
-        : isAvailable 
-            ? colorScheme.primary.withOpacity(0.2) 
+
+    Color tableColor = isSelected
+        ? colorScheme.primary
+        : isAvailable
+            ? colorScheme.primary.withOpacity(0.2)
             : Colors.grey[300]!;
-            
-    Color borderColor = isSelected 
-        ? colorScheme.primary 
-        : isAvailable 
-            ? colorScheme.primary.withOpacity(0.5) 
+
+    Color borderColor = isSelected
+        ? colorScheme.primary
+        : isAvailable
+            ? colorScheme.primary.withOpacity(0.5)
             : Colors.grey[400]!;
-            
-    Color textColor = isSelected 
-        ? colorScheme.onPrimary 
-        : isAvailable 
-            ? colorScheme.onSurface 
+
+    Color textColor = isSelected
+        ? colorScheme.onPrimary
+        : isAvailable
+            ? colorScheme.onSurface
             : Colors.grey[600]!;
 
     return GestureDetector(
@@ -48,7 +47,6 @@ class TableWidget extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Table Top
           Container(
             width: size,
             height: size * 0.6,
@@ -79,8 +77,6 @@ class TableWidget extends StatelessWidget {
               ),
             ),
           ),
-          
-          // Table Legs
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -88,33 +84,23 @@ class TableWidget extends StatelessWidget {
               _buildTableLeg(size * 0.2, borderColor),
             ],
           ),
-          
-          // Seats
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Left seat
               _buildSeat(0, seatCount > 0, textColor, size * 0.2),
-              // Right seat
               _buildSeat(1, seatCount > 1, textColor, size * 0.2),
             ],
           ),
-          
-          // Bottom seats
           if (seatCount > 2) ...[
             SizedBox(height: size * 0.1),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Bottom-left seat
                 _buildSeat(2, seatCount > 2, textColor, size * 0.2),
-                // Bottom-right seat
                 _buildSeat(3, seatCount > 3, textColor, size * 0.2),
               ],
             ),
           ],
-          
-          // Table capacity
           Padding(
             padding: const EdgeInsets.only(top: 4.0),
             child: Text(
@@ -131,18 +117,19 @@ class TableWidget extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildTableLeg(double size, Color color) {
     return Container(
       width: size,
       height: size * 0.5,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(size * 0.2)),
+        borderRadius:
+            BorderRadius.vertical(bottom: Radius.circular(size * 0.2)),
       ),
     );
   }
-  
+
   Widget _buildSeat(int index, bool isAvailable, Color color, double size) {
     return Container(
       width: size,

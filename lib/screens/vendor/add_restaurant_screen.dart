@@ -2,9 +2,9 @@
 
 
 import 'dart:io'; 
-import 'dart:convert'; // <<< NEW: Import for Base64 encoding/decoding
+import 'dart:convert'; 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; // <<< NEW: Import for Uint8List
+import 'package:flutter/foundation.dart'; 
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
@@ -149,15 +149,13 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
     }
   }
 
-  // MODIFIED: The function now performs Base64 encoding.
   Future<void> _pickImage(ImageSource source) async {
     try {
       final picker = ImagePicker();
-      // Keep compression to help meet the 1 MiB Firestore document limit
       final pickedFile = await picker.pickImage(
           source: source, 
-          imageQuality: 50, // Reduced quality for safety
-          maxWidth: 300,   // Reduced max width for safety
+          imageQuality: 50, 
+          maxWidth: 300,   
         ); 
 
       if (pickedFile != null) {
@@ -182,7 +180,6 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
     }
   }
 
-  // MODIFIED: The submit function now uses the Base64 string.
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -200,7 +197,6 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
       return;
     }
     
-    // MODIFIED: Use the Base64 string if available, otherwise pass null or an empty string.
     final base64Image = _base64ImageString; 
 
     setState(() => _isLoading = true);
@@ -220,16 +216,11 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
       }
 
       final tableCount = int.tryParse(_tableCountController.text) ?? 1;
-      // Tables will be created by the RestaurantService with default 6 seats per table
-
-      // MODIFIED: Passed the Base64 string to the service layer.
+     
       await restaurantService.addRestaurant(
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
-        // IMPORTANT: Change 'imagePath' in RestaurantService.addRestaurant to accept a Base64 string
-        // OR add a new parameter like 'base64Image' and update the service accordingly.
-        // Assuming the service will now accept and save this Base64 string directly.
-        imagePath: base64Image, // Use this if RestaurantService is updated to expect Base64 here
+        
         category: category,
         tableCount: tableCount,
         location: {
@@ -332,9 +323,8 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
                 child: _base64ImageString != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        // USE Image.memory to display the Base64 string
                         child: Image.memory(
-                          base64Decode(_base64ImageString!), // Decode the string back to bytes
+                          base64Decode(_base64ImageString!), 
                           fit: BoxFit.cover, 
                           width: double.infinity,
                         ),

@@ -7,7 +7,6 @@ import 'package:my_first_flutter_app/models/restaurant.dart';
 import 'package:my_first_flutter_app/screens/customer/restaurant_detail_screen.dart';
 import 'dart:convert'; // REQUIRED for Base64 decoding
 
-// Define common colors for consistency
 const Color primaryBlack = Colors.black;
 const Color primaryWhite = Colors.white;
 const Color lightGray = Colors.black;
@@ -44,11 +43,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
     try {
       final restaurantService = context.read<RestaurantService>();
-      // NOTE: Assuming CategoryService is implemented to fetch categories
       final categoryService = CategoryService();
 
-      // Load restaurants and categories in parallel
-      // NOTE: Ensure getAllRestaurants is either synchronous or properly awaited if it's async
+      
       final restaurants = restaurantService.getAllRestaurants();
       final categories = await categoryService.getCategories();
 
@@ -101,7 +98,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   void _onCategorySelected(String? category) {
     setState(() {
       _selectedCategory = category == _selectedCategory ? null : category;
-      // Clear search when changing categories for better UX
       if (_searchController.text.isNotEmpty) {
         _searchController.clear();
         _searchQuery = '';
@@ -128,15 +124,15 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: primaryWhite, // Set background to white
+      backgroundColor: primaryWhite, 
       appBar: AppBar(
         title: const Text(
           'Restaurants',
           style: TextStyle(color: primaryWhite, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: primaryBlack, // Set AppBar background to black
-        foregroundColor: primaryWhite, // Set icon/text color to white
-        elevation: 0, // Remove shadow
+        backgroundColor: primaryBlack, 
+        foregroundColor: primaryWhite, 
+        elevation: 0, 
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),

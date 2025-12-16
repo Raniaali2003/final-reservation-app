@@ -79,9 +79,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (success) {
         if (!mounted) return;
 
-        // If registration succeeded, wait a bit for user data to be set
         if (authService.currentUser == null) {
-          // Wait for auth state listener to update currentUser
           for (int i = 0; i < 5; i++) {
             await Future.delayed(const Duration(milliseconds: 300));
             if (authService.currentUser != null) break;
@@ -89,9 +87,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           }
         }
         
-        // Navigate to home if registration succeeded
-        // Even if currentUser is temporarily null, the auth state listener will update it
-        // and the user is authenticated in Firebase Auth
+        
         _handleAuthSuccess(message: 'Signed up successfully');
       } else {
         if (mounted) {
@@ -113,7 +109,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
 
-  // --- Navigation to Home ---
   void _navigateToHome() {
     if (!mounted) return;
 
@@ -168,7 +163,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
   }
 
-  // --- Rounded Text Field Helper ---
   Widget _buildRoundedTextField({
     required TextEditingController controller,
     required String labelText,

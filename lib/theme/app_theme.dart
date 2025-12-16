@@ -51,7 +51,6 @@ class AppTheme {
       fillColor: Colors.grey[100],
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     ),
-    // Card theme is now defined at the top level
   );
 
   static final ThemeData darkTheme = ThemeData(
@@ -105,10 +104,8 @@ class AppTheme {
       fillColor: Colors.grey[800],
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     ),
-    // Card theme is now defined at the top level
   );
 
-  // Common text styles
   static const TextStyle heading1 = TextStyle(
     fontSize: 28,
     fontWeight: FontWeight.bold,

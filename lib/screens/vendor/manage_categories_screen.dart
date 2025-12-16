@@ -19,7 +19,7 @@ class ManageCategoriesScreen extends StatefulWidget {
 class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
   final _categoryController = TextEditingController();
   bool _isLoading = false;
-  final double borderRadius = 30.0; // Consistent border radius
+  final double borderRadius = 30.0; 
 
   @override
   void dispose() {
@@ -103,23 +103,21 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     }
   }
   
-  // --- Build Method (Theming Applied) ---
 
   @override
   Widget build(BuildContext context) {
     final restaurantService = context.watch<RestaurantService>();
     
     return Scaffold(
-      backgroundColor: primaryWhite, // ⭐️ UI CHANGE: White background
+      backgroundColor: primaryWhite, 
       appBar: AppBar(
-        // ⭐️ UI CHANGE: B&W AppBar
         title: const Text('Manage Categories', style: TextStyle(color: primaryBlack, fontWeight: FontWeight.bold)),
         backgroundColor: primaryWhite,
         foregroundColor: primaryBlack,
         elevation: 0,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: primaryBlack)) // ⭐️ UI CHANGE: Black indicator
+          ? const Center(child: CircularProgressIndicator(color: primaryBlack)) 
           : Column(
               children: [
                 Padding(
@@ -154,13 +152,13 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                                 : null,
                           ),
                           onChanged: (_) {
-                            setState(() {}); // Trigger rebuild to show/hide clear icon
+                            setState(() {}); 
                           },
                           onSubmitted: (_) => _addCategory(restaurantService),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // ⭐️ UI CHANGE: Black Add Button
+                      
                       ElevatedButton(
                         onPressed: () => _addCategory(restaurantService),
                         style: ElevatedButton.styleFrom(
@@ -176,7 +174,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                     ],
                   ),
                 ),
-                const Divider(color: lightGray, height: 1), // ⭐️ UI CHANGE: Grey divider
+                const Divider(color: lightGray, height: 1), 
                 const Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Text(
@@ -184,7 +182,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: primaryBlack, // ⭐️ UI CHANGE: Black text
+                      color: primaryBlack, 
                     ),
                   ),
                 ),
@@ -211,10 +209,9 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                         itemBuilder: (context, index) {
                           final category = categories[index];
                           return ListTile(
-                            // ⭐️ UI CHANGE: B&W ListTile
                             title: Text(category, style: const TextStyle(color: primaryBlack)),
                             trailing: IconButton(
-                              icon: const Icon(Icons.delete, color: errorRed), // Red for delete action
+                              icon: const Icon(Icons.delete, color: errorRed), 
                               onPressed: () => _confirmDeleteCategory(category, restaurantService),
                             ),
                           );

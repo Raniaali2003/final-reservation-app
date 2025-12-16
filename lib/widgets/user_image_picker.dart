@@ -1,11 +1,10 @@
 import 'dart:io';
-import 'dart:convert'; // Required for base64Encode
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; // Required for Uint8List
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
 class UserImagePicker extends StatefulWidget {
-  // Modified: imagePickFn now accepts a String (the Base64 encoded image)
   const UserImagePicker(this.imagePickFn, {super.key});
 
   final void Function(String? pickedImageString) imagePickFn;
@@ -21,7 +20,6 @@ class _UserImagePickerState extends State<UserImagePicker> {
   void _pickImage() async {
     FocusScope.of(context).unfocus();
 
-    // 1. Pick the image with compression to keep the Firestore document size down
     final pickedImageFile = await ImagePicker().pickImage(
       source: ImageSource.camera,
       imageQuality: 50,
@@ -29,36 +27,29 @@ class _UserImagePickerState extends State<UserImagePicker> {
     );
 
     if (pickedImageFile == null) {
-      // If the user cancels picking an image, clear the old one
       setState(() {
         _pickedImage = null;
         _base64ImageString = null;
       });
-      widget.imagePickFn(null); // Pass null back
+      widget.imagePickFn(null);
       return;
     }
 
-    // 2. Read the image file as bytes
     final imageFile = File(pickedImageFile.path);
     Uint8List imageBytes = await imageFile.readAsBytes();
 
-    // 3. Encode the bytes into a Base64 string
     final encodedImage = base64Encode(imageBytes);
 
-    // 4. Update the state for local preview and callback
     setState(() {
       _pickedImage = pickedImageFile;
       _base64ImageString = encodedImage;
     });
-    
-    // 5. Pass the Base64 string back to the parent widget for saving
+
     widget.imagePickFn(encodedImage);
   }
 
   @override
   Widget build(BuildContext context) {
-    // We use Image.file() for the local preview since we still have the file path.
-    // This is the simplest way to show the image immediately after picking it.
     return Column(
       children: <Widget>[
         if (_pickedImage != null)
@@ -70,7 +61,7 @@ class _UserImagePickerState extends State<UserImagePicker> {
               borderRadius: BorderRadius.circular(15),
               child: Image.file(
                 File(_pickedImage!.path),
-                width: 150, // Match the max width for consistent preview
+                width: 150,
                 height: 150,
                 fit: BoxFit.cover,
               ),
@@ -79,7 +70,7 @@ class _UserImagePickerState extends State<UserImagePicker> {
         TextButton.icon(
           onPressed: _pickImage,
           icon: Icon(
-            Icons.image, 
+            Icons.image,
             color: Theme.of(context).primaryColor,
           ),
           label: Text(

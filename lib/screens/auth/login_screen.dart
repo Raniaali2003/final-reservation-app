@@ -25,7 +25,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isPasswordVisible = false;
   String? _errorMessage;
 
-  // Color constants
   static const Color primaryBlack = Colors.black;
   static const Color lightGray = Colors.grey;
   static const double borderRadius = 30.0;
@@ -84,9 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (success) {
-        // If login succeeded, wait a bit for user data to be set
         if (authService.currentUser == null) {
-          // Wait for auth state listener to update currentUser
           for (int i = 0; i < 5; i++) {
             await Future.delayed(const Duration(milliseconds: 300));
             if (authService.currentUser != null) break;
@@ -94,9 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
           }
         }
         
-        // Navigate to home if login succeeded
-        // Even if currentUser is temporarily null, the auth state listener will update it
-        // and the user is authenticated in Firebase Auth
+       
         _handleAuthSuccess(message: 'Login successful');
       } else {
         setState(() {

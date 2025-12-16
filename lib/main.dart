@@ -6,24 +6,18 @@ import 'package:device_preview/device_preview.dart';
 import 'package:my_first_flutter_app/theme/app_theme_new.dart' as app_theme;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-// Vendor Cubit
 import 'package:my_first_flutter_app/cubit/vendor_cubit/vendor_exports.dart';
 
-// CORE FIREBASE MESSAGING IMPORT
 import 'package:firebase_messaging/firebase_messaging.dart';
-// <--- NEW for service
 
-// Services
 import 'package:my_first_flutter_app/services/local_storage_service.dart';
 import 'package:my_first_flutter_app/services/auth_service.dart';
 import 'package:my_first_flutter_app/services/restaurant_service.dart';
-import 'package:my_first_flutter_app/services/notification_service.dart'; // <--- NEW
-import 'package:my_first_flutter_app/repo/notification_repository.dart'; // <--- NEW
+import 'package:my_first_flutter_app/services/notification_service.dart';
+import 'package:my_first_flutter_app/repo/notification_repository.dart';
 
-// Cubits
-import 'package:my_first_flutter_app/cubit/notification/notification_cubit.dart'; // <--- NEW
+import 'package:my_first_flutter_app/cubit/notification/notification_cubit.dart';
 
-// Screens
 import 'package:my_first_flutter_app/screens/auth/role_selection_screen.dart';
 import 'package:my_first_flutter_app/screens/auth/login_screen.dart';
 import 'package:my_first_flutter_app/screens/auth/register_screen.dart';
@@ -31,54 +25,37 @@ import 'package:my_first_flutter_app/screens/vendor/vendor_home_screen.dart';
 import 'package:my_first_flutter_app/screens/vendor/add_restaurant_screen.dart';
 import 'package:my_first_flutter_app/screens/vendor/booked_tables_screen.dart';
 import 'package:my_first_flutter_app/screens/customer/customer_home_screen.dart';
-import 'package:my_first_flutter_app/screens/notification/notifications_screen.dart'; // <--- NEW
+import 'package:my_first_flutter_app/screens/notification/notifications_screen.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-// ----------------------------------------------------------------------
-// 1. TOP-LEVEL BACKGROUND HANDLER
-// ----------------------------------------------------------------------
-// This function runs when the app is in the background or terminated.
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // MUST initialize Firebase in the background isolate
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // NOTE: In a real app, you would log or save the data here to be loaded later.
   debugPrint("Handling a background message: ${message.data}");
 }
 
-// Global key for the root Navigator. Used for navigation on notification tap.
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // ----------------------------------------------------------------------
-  // 2. NOTIFICATION SERVICE INITIALIZATION
-  // ----------------------------------------------------------------------
-  // Register the background message handler before running the app
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // Instantiate Notification Repository and initialize it
   final notificationRepo = NotificationRepository();
   await notificationRepo.init();
 
-  // Instantiate Notification Service (for token management)
   final notificationService = NotificationService();
-  // ----------------------------------------------------------------------
 
-  // 3. CORE SERVICE INSTANTIATION
   final authService = AuthService();
   final restaurantService = RestaurantService();
 
-  // Handle global errors
   ErrorWidget.builder = (FlutterErrorDetails details) {
     if (details.exception is FlutterError) {
       return Scaffold(
@@ -104,28 +81,20 @@ void main() async {
     return ErrorWidget(details.exception);
   };
 
-  // 4. Setup MultiProvider with the SINGLE instances
   final app = MultiProvider(
     providers: [
-      // Standard Providers
       ChangeNotifierProvider<AuthService>.value(value: authService),
       ChangeNotifierProvider<RestaurantService>.value(value: restaurantService),
-      Provider<NotificationService>.value(
-          value: notificationService), // <--- NEW
-
-      // BLoC Providers
+      Provider<NotificationService>.value(value: notificationService),
       BlocProvider<NotificationCubit>(
-        // <--- NEW
         lazy: false,
         create: (_) => NotificationCubit(notificationRepo),
       ),
       BlocProvider<VendorCubit>(
-        // <--- NEW
         lazy: false,
         create: (_) => VendorCubit(),
       ),
     ],
-    // Pass the single instances to MyApp's constructor
     child:
         MyApp(authService: authService, restaurantService: restaurantService),
   );
@@ -155,29 +124,20 @@ class _MyAppState extends State<MyApp> {
     await widget.authService.init();
     await widget.restaurantService.init();
 
-    // ----------------------------------------------------------------------
-    // Save FCM token for the current user
-    // This runs after the AuthService has initialized the current user.
-    // ----------------------------------------------------------------------
     final authService = Provider.of<AuthService>(context, listen: false);
     final notificationService =
         Provider.of<NotificationService>(context, listen: false);
 
     if (authService.currentUser != null) {
-      // Save token for all users
       await notificationService.saveFcmToken(authService.currentUser!.id);
 
-      // If user is a vendor, also save as vendor token
       if (authService.currentUser!.isVendor) {
-        // Assuming the vendor's restaurant ID is stored in the user object
-        // You might need to adjust this based on your data model
         final restaurantId = authService.currentUser!.restaurantId;
         if (restaurantId != null && restaurantId.isNotEmpty) {
           await notificationService.saveTokenAsVendor(restaurantId);
         }
       }
     }
-    // ----------------------------------------------------------------------
   }
 
   Widget _getInitialScreen(AuthService authService) {

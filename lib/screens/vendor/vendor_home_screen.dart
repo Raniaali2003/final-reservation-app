@@ -1,107 +1,4 @@
-// import 'package:flutter/material.dart';
 
-// import 'package:provider/provider.dart';
-// import 'package:my_first_flutter_app/models/restaurant.dart';
-// import 'package:my_first_flutter_app/services/restaurant_service.dart';
-// import 'package:my_first_flutter_app/widgets/restaurant_card.dart';
-// import 'package:my_first_flutter_app/screens/vendor/manage_categories_screen.dart';
-
-// const Color primaryBlack = Colors.black;
-// const Color primaryWhite = Colors.white;
-// const Color lightGray = Colors.grey;
-
-// class VendorHomeScreen extends StatefulWidget {
-//   const VendorHomeScreen({super.key});
-
-//   @override
-//   State<VendorHomeScreen> createState() => _VendorHomeScreenState();
-// }
-
-// class _VendorHomeScreenState extends State<VendorHomeScreen> {
-//   List<Restaurant> _restaurants = [];
-//   bool _isLoading = true;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _loadRestaurants();
-//   }
-
-//   Future<void> _loadRestaurants() async {
-//     if (!mounted) return;
-
-//     setState(() {
-//       _isLoading = true;
-//     });
-
-//     try {
-//       final restaurantService = Provider.of<RestaurantService>(context, listen: false);
-//       // Force refresh from the service
-//       await restaurantService.loadRestaurants();
-//       final restaurants = restaurantService.getAllRestaurants();
-//       if (mounted) {
-//         setState(() {
-//           _restaurants = restaurants;
-//         });
-//         // Show success message
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           const SnackBar(
-//             content: Text('Restaurants refreshed successfully'),
-//             duration: Duration(seconds: 2),
-//           ),
-//         );
-//       }
-//     } catch (e) {
-//       if (mounted) {
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           SnackBar(
-//             content: Text('Failed to refresh restaurants: $e'),
-//             duration: const Duration(seconds: 3),
-//           ),
-//         );
-//       }
-//     } finally {
-//       if (mounted) {
-//         setState(() {
-//           _isLoading = false;
-//         });
-//       }
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return WillPopScope(
-//       onWillPop: () async {
-//         Navigator.pushReplacementNamed(context, '/role-selection');
-//         return false;
-//       },
-//       child: Scaffold(
-//         backgroundColor: primaryWhite,
-//         appBar: AppBar(
-//           backgroundColor: primaryWhite,
-//           foregroundColor: primaryBlack,
-//           elevation: 0,
-//           title: const Text('My Restaurants', style: TextStyle(color: primaryBlack)),
-//           leading: IconButton(
-//             icon: const Icon(Icons.arrow_back, color: primaryBlack),
-//             onPressed: () => Navigator.pushReplacementNamed(context, '/role-selection'),
-//           ),
-//           actions: [
-//             IconButton(
-//               icon: _isLoading 
-//                   ? const SizedBox(
-//                       width: 20,
-//                       height: 20,
-//                       child: CircularProgressIndicator(
-//                         strokeWidth: 2,
-//                         color: primaryBlack,
-//                       ),
-//                     )
-//                   : const Icon(Icons.refresh, color: primaryBlack),
-//               onPressed: _isLoading ? null : _loadRestaurants,
-//               tooltip: 'Refresh restaurants',
-//             ),
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:my_first_flutter_app/models/restaurant.dart';
@@ -113,7 +10,7 @@ import 'package:my_first_flutter_app/screens/vendor/manage_categories_screen.dar
 const Color primaryBlack = Colors.black;
 const Color primaryWhite = Colors.white;
 const Color lightGray = Colors.grey;
-const Color primaryRed = Colors.red; // Added for delete action
+const Color primaryRed = Colors.red; 
 
 class VendorHomeScreen extends StatefulWidget {
   const VendorHomeScreen({super.key});
@@ -129,20 +26,16 @@ class _VendorHomeScreenState extends State<VendorHomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Use Future.microtask to ensure the context is fully built before reading the service
-    // This resolves the common 'setState during build' warning when provider is used in initState
+    
     Future.microtask(() => _loadRestaurants());
   }
 
-  // Method to test notification
   Future<void> _testNotification() async {
     final notificationService = NotificationService();
     
     try {
-      // Print the device's FCM token
       await notificationService.printFcmToken();
       
-      // Show a snackbar to confirm the test notification was sent
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -172,16 +65,13 @@ class _VendorHomeScreenState extends State<VendorHomeScreen> {
 
     try {
       final restaurantService = Provider.of<RestaurantService>(context, listen: false);
-      // Force refresh from the service
       await restaurantService.loadRestaurants();
-      // The local service list is the source of truth
       final restaurants = restaurantService.getAllRestaurants();
       
       if (mounted) {
         setState(() {
           _restaurants = restaurants;
         });
-        // Removed success snackbar here to avoid spamming the user on initial load
       }
     } catch (e) {
       if (mounted) {
@@ -206,7 +96,6 @@ class _VendorHomeScreenState extends State<VendorHomeScreen> {
   Future<void> _deleteRestaurant(String restaurantId) async {
     final service = context.read<RestaurantService>();
     
-    // Optimistic UI update: remove from local list immediately
     setState(() {
       _restaurants.removeWhere((r) => r.id == restaurantId);
     });
@@ -219,15 +108,12 @@ class _VendorHomeScreenState extends State<VendorHomeScreen> {
         );
       }
     } catch (e) {
-      // Revert UI change if deletion fails in Firestore
-      // To properly revert, we'd need to fetch the single restaurant back or store a snapshot,
-      // but for simplicity, we'll just log and reload.
+     
       debugPrint('Error deleting restaurant: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to delete restaurant: $e')),
         );
-        // Force full reload to resync local list with Firestore state
         _loadRestaurants();
       }
     }
@@ -393,11 +279,9 @@ class _VendorHomeScreenState extends State<VendorHomeScreen> {
       itemBuilder: (context, index) {
         final restaurant = _restaurants[index];
         
-        // MODIFIED: Wrap RestaurantCard in a Dismissible widget for swipe-to-delete
         return Dismissible(
-          key: ValueKey(restaurant.id), // Unique key for the Dismissible widget
+          key: ValueKey(restaurant.id), 
           direction: DismissDirection.endToStart,
-          // Background shown during swipe
           background: Container(
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20.0),
@@ -405,7 +289,6 @@ class _VendorHomeScreenState extends State<VendorHomeScreen> {
             child: const Icon(Icons.delete_forever, color: primaryWhite),
           ),
           confirmDismiss: (direction) async {
-            // Show confirmation dialog before executing the delete
             return await _confirmDelete(context, restaurant.name);
           },
           onDismissed: (direction) {

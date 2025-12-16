@@ -6,19 +6,14 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Your local User model
-
 class AuthService extends ChangeNotifier {
-  // Firebase Instances
   final firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // State Management
   User? _currentUser;
   bool _isLoading = false;
   String? _error;
 
-  // Getters
   User? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -26,14 +21,12 @@ class AuthService extends ChangeNotifier {
 
   StreamSubscription<firebase_auth.User?>? _authStateSubscription;
 
-  // Initialize service
   Future<void> init() async {
     _isLoading = true;
     if (hasListeners) {
       notifyListeners();
     }
 
-    // Listen to Firebase auth changes
     _authStateSubscription = _auth.authStateChanges().listen((fUser) async {
       try {
         if (fUser != null) {
@@ -42,7 +35,6 @@ class AuthService extends ChangeNotifier {
           _currentUser = null;
         }
         _isLoading = false;
-        // Only notify if there are listeners (widgets still in tree)
         if (hasListeners) {
           notifyListeners();
         }
@@ -62,9 +54,6 @@ class AuthService extends ChangeNotifier {
     super.dispose();
   }
 
-  // --- Helper Methods ---
-
-  // Fetch Firestore user data
   Future<User?> _fetchUserData(firebase_auth.User fUser) async {
     try {
       final doc = await _db.collection('users').doc(fUser.uid).get();
@@ -87,7 +76,6 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  // Store or update Firestore user
   Future<void> _storeUserData(firebase_auth.User fUser, bool isVendor,
       {String? name}) async {
     final roleData = {
@@ -103,17 +91,11 @@ class AuthService extends ChangeNotifier {
         .set(roleData, SetOptions(merge: true));
   }
 
-  // --- Core Auth Methods ---
-
-  // Helper method to ensure Firebase Auth is ready
   Future<void> _ensureAuthReady() async {
-    // Wait a small delay to ensure native code is initialized
     await Future.delayed(const Duration(milliseconds: 100));
-    // Access the auth instance to trigger initialization if needed
     _auth.currentUser;
   }
 
-  // Email/Password Registration
   Future<bool> register(
       String email, String password, String name, bool isVendor) async {
     try {
@@ -123,7 +105,6 @@ class AuthService extends ChangeNotifier {
         notifyListeners();
       }
 
-      // Ensure Firebase Auth is ready before attempting registration
       await _ensureAuthReady();
 
       debugPrint('Attempting to register user with email: $email');
@@ -136,45 +117,36 @@ class AuthService extends ChangeNotifier {
       } on firebase_auth.FirebaseAuthException catch (e) {
         debugPrint(
             'FirebaseAuthException during registration: ${e.code} - ${e.message}');
-        // Check if user was actually created despite the error
         final currentUser = _auth.currentUser;
         if (e.code == 'email-already-in-use' &&
             currentUser != null &&
             currentUser.email == email) {
-          // User exists and is signed in - this is actually a success case
           debugPrint(
               'User already exists and is signed in, proceeding with registration...');
           userCredential = null; // We'll use currentUser instead
         } else {
-          // Re-throw Firebase Auth exceptions (like email-already-in-use for real)
           rethrow;
         }
       } on TypeError catch (e) {
         debugPrint('TypeError during registration: $e');
-        // If we get the PigeonUserDetails error, check if user was created first
         if (e.toString().contains('PigeonUserDetails') ||
             e.toString().contains('List<Object?>')) {
-          // Wait a bit for Firebase Auth to update currentUser
           await Future.delayed(const Duration(milliseconds: 300));
-          // Check if user was actually created despite the TypeError
           final currentUser = _auth.currentUser;
           if (currentUser != null && currentUser.email == email) {
             debugPrint('User was created despite TypeError, proceeding...');
             userCredential = null; // We'll use currentUser instead
           } else {
-            // User wasn't created, try retry
             debugPrint(
                 'PigeonUserDetails error detected, retrying after delay...');
             await Future.delayed(const Duration(milliseconds: 500));
             try {
-              // Retry the registration
               userCredential = await _auth.createUserWithEmailAndPassword(
                   email: email, password: password);
               debugPrint('Retry registration successful for email: $email');
             } on firebase_auth.FirebaseAuthException catch (retryAuthError) {
               debugPrint(
                   'FirebaseAuthException on retry: ${retryAuthError.code} - ${retryAuthError.message}');
-              // Wait a bit and check again if user exists
               await Future.delayed(const Duration(milliseconds: 300));
               final retryCurrentUser = _auth.currentUser;
               if (retryAuthError.code == 'email-already-in-use' &&
@@ -183,12 +155,10 @@ class AuthService extends ChangeNotifier {
                 debugPrint('User exists from first attempt, proceeding...');
                 userCredential = null; // We'll use currentUser instead
               } else {
-                // Real email-already-in-use error - user exists but it's not the one we created
                 rethrow;
               }
             } catch (retryError) {
               debugPrint('Other error on retry: $retryError');
-              // Wait a bit and check one more time if user was created
               await Future.delayed(const Duration(milliseconds: 300));
               final retryCurrentUser = _auth.currentUser;
               if (retryCurrentUser != null && retryCurrentUser.email == email) {
@@ -210,22 +180,18 @@ class AuthService extends ChangeNotifier {
       if (userCredential?.user != null) {
         fUser = userCredential!.user;
       } else {
-        // Check if user was created via currentUser (in case of TypeError workaround)
         fUser = _auth.currentUser;
         if (fUser == null || fUser.email != email) {
           throw Exception('Registration failed: Unable to create user account');
         }
       }
 
-      // Store user data in Firestore
       if (fUser != null) {
         await _storeUserData(fUser, isVendor, name: name);
 
-        // Wait a bit for Firestore to be ready, then fetch user data
         await Future.delayed(const Duration(milliseconds: 500));
         var user = await _fetchUserData(fUser);
 
-        // If fetch fails, try a few more times
         if (user == null) {
           for (int i = 0; i < 3; i++) {
             await Future.delayed(const Duration(milliseconds: 500));
@@ -234,8 +200,6 @@ class AuthService extends ChangeNotifier {
           }
         }
 
-        // If still null, create user object from Firebase user directly
-        // This ensures currentUser is always set before returning success
         if (_currentUser == null && fUser.email != null) {
           _currentUser = User(
             id: fUser.uid,
