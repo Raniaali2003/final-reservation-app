@@ -10,7 +10,7 @@ import 'dart:convert'; // REQUIRED for Base64 decoding
 // Define common colors for consistency
 const Color primaryBlack = Colors.black;
 const Color primaryWhite = Colors.white;
-const Color lightGray = Colors.grey;
+const Color lightGray = Colors.black;
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -132,14 +132,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       appBar: AppBar(
         title: const Text(
           'Restaurants',
-          style: TextStyle(color: primaryBlack, fontWeight: FontWeight.bold),
+          style: TextStyle(color: primaryWhite, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: primaryWhite, // Set AppBar background to white
-        foregroundColor: primaryBlack, // Set icon/text color to black
+        backgroundColor: primaryBlack, // Set AppBar background to black
+        foregroundColor: primaryWhite, // Set icon/text color to white
         elevation: 0, // Remove shadow
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: _handleLogout,
             tooltip: 'Logout',
           ),
@@ -148,7 +148,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(primaryBlack)))
+                  valueColor: AlwaysStoppedAnimation<Color>(primaryWhite),
+                  backgroundColor: primaryBlack))
           : Column(
               children: [
                 // Search Bar

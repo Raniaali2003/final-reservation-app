@@ -12,7 +12,7 @@ class SendNotificationScreen extends StatelessWidget {
   // 1. HARDCODED TOKEN: Your specific vendor device token is used here for testing.
   // This token should match the one stored in vendorNotification/MainVendor if 
   // you want your manual test to simulate a reservation notification.
-  final deviceToken = "faHscCoQQLCgDK3eUwDUqE:APA91bE_C4GpOTumjmZCEdPSEMkhYxpgHTpXur-dbmEF29fbhTTC6GLM2ofrkTOlx_3850S_U2dl7YdBMJy4j7jjRHhjU2UvWmGHm4kHRkNyMc0jLHpjDzc";
+  final deviceToken = "dCT3wq_ASIa6WPutvhJOyF:APA91bHwiDH5R6puTmU2Bs59UrYfeVpIKhBCl0eNjunJSlWoQAWYrWKMFOHRteXIs2hj3smtFW7oV7-Y7sTuhjXgeHCPmQ6yhh4EOqe4TDapgn-jCexGCrQ";
 
   // 2. PATH TO YOUR SERVICE ACCOUNT JSON
   // Ensure this path is correct and the file is included in your pubspec.yaml assets section.
